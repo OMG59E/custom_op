@@ -8,6 +8,8 @@
 #include "Eigen/Dense"
 #include "onnxruntime_cxx_api.h"
 
+static GroupNormCustomOp c_GroupNormCustomOp;
+
 template <typename T>
 using ConstEigenVectorArrayMap = Eigen::Map<const Eigen::Array<T, Eigen::Dynamic, 1>>;
 template <typename T>
@@ -20,6 +22,7 @@ void GroupNormKernel<T>::Compute(OrtKernelContext* context) {
   const T* X_data = reinterpret_cast<const T*>(ort_.GetTensorData<T>(input_X));
   const OrtValue* input_num_groups = ort_.KernelContext_GetInput(context, 1);
   const T* num_groups = reinterpret_cast<const T*>(ort_.GetTensorData<const T*>(input_num_groups));
+  int num_groups_i = int(num_groups[0]);
   const OrtValue* input_scale = ort_.KernelContext_GetInput(context, 2);
   const T* scale_data = reinterpret_cast<const T*>(ort_.GetTensorData<T>(input_scale));
   const OrtValue* input_B = ort_.KernelContext_GetInput(context, 3);
@@ -30,7 +33,7 @@ void GroupNormKernel<T>::Compute(OrtKernelContext* context) {
   OrtValue* output = ort_.KernelContext_GetOutput(context, 0, dimensions.data(), dimensions.size());
   float* out = ort_.GetTensorMutableData<float>(output);
   const int64_t N = dimensions[0];
-  const int64_t C = dimensions[1] / num_groups[0];  // assume [N C*num_groups H W]  per the spec
+  const int64_t C = dimensions[1] / num_groups_i;  // assume [N C*num_groups H W]  per the spec
 
   OrtTensorTypeAndShapeInfo* output_info = ort_.GetTensorTypeAndShape(output);
   ort_.ReleaseTensorTypeAndShapeInfo(output_info);
@@ -42,14 +45,14 @@ void GroupNormKernel<T>::Compute(OrtKernelContext* context) {
   }
   sample_size *= C;
 
-  for (auto i = 0; i < N * num_groups[0]; ++i) {
+  for (auto i = 0; i < N * num_groups_i; ++i) {
     ConstEigenVectorArrayMap<float> Xi(X_data + sample_size * i, sample_size);
     const float Xi_mean = Xi.mean();
     const float squared_norm = (Xi - Xi_mean).matrix().squaredNorm();
     const float inv_stdev = 1.0f / std::sqrt(squared_norm / sample_size + epsilon_);
     EigenVectorArrayMap<float> Yi(out + sample_size * i, sample_size);
-    const float channel_scale = inv_stdev * scale_data[i % (C * int(num_groups[0]))];
-    const float channel_shift = B_data[i % (C * int(num_groups[0]))] - Xi_mean * channel_scale;
+    const float channel_scale = inv_stdev * scale_data[i % (C * num_groups_i)];
+    const float channel_shift = B_data[i % (C * num_groups_i)] - Xi_mean * channel_scale;
     Yi = Xi * channel_scale + channel_shift;
   }
 }
@@ -78,10 +81,6 @@ static void AddOrtCustomOpDomainToContainer(OrtCustomOpDomain* domain, const Ort
 }
 
 OrtStatus* ORT_API_CALL RegisterCustomOps(OrtSessionOptions* options, const OrtApiBase* api) {
-  // GroupNormCustomOp custom_op;
-  // Ort::CustomOpDomain custom_op_domain("mydomain");
-  // custom_op_domain.Add(&custom_op);
-
   OrtCustomOpDomain* domain = nullptr;
   const OrtApi* ortApi = api->GetApi(ORT_API_VERSION);
 
@@ -89,13 +88,10 @@ OrtStatus* ORT_API_CALL RegisterCustomOps(OrtSessionOptions* options, const OrtA
     return status;
   }
 
-  AddOrtCustomOpDomainToContainer(domain, ortApi);
-  printf("1111111111111\n");
-  GroupNormCustomOp custom_op;
-  if (auto status = ortApi->CustomOpDomain_Add(domain, &custom_op)) {
+  AddOrtCustomOpDomainToContainer(domain, ortApi);;
+  if (auto status = ortApi->CustomOpDomain_Add(domain, &c_GroupNormCustomOp)) {
     return status;
   }
-  printf("222222222222222\n");
   return ortApi->AddCustomOpDomain(options, domain);
 }
 
