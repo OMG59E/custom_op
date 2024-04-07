@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project (customop)
+project(customop)
 add_definitions(-std=c++11)
 
 set(TEST_SOURCE custom_op_test.cc)
@@ -7,7 +7,7 @@ set(HEADER custom_op.h)
 set(SOURCE custom_op.cc)
 
 #Include path to header files for Custom Op
-include_directories("/usr/local/include/eigen3")
+include_directories("../3rdparty/eigen3")
 include_directories("../3rdparty/onnxruntime-linux-x64-1.13.1/include")
 
 #Linking dependencies for Custom Op
