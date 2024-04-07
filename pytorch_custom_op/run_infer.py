@@ -13,11 +13,11 @@ class CustomModel(torch.nn.Module):
 m = CustomModel()
 m.eval()
 
-X = torch.randn(3, 2, 1, 2)
-num_groups = torch.tensor([2.])
-scale = torch.tensor([1., 1.])
-bias = torch.tensor([0., 0.])
+X = torch.randn(3, 2, 1, 2, dtype=torch.float32)
+num_groups = torch.tensor([2.], dtype=torch.float32)
+scale = torch.tensor([1., 1.], dtype=torch.float32)
+bias = torch.tensor([0., 0.], dtype=torch.float32)
 inputs = (X, num_groups, scale, bias)
 
 y = m(*inputs)
-print(y)
+print(y.numpy().flatten())
