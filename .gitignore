@@ -7,3 +7,5 @@ cmake-build*
 outputs
 __pycache__
 .pkl_memoize_py3
+*.so
+*.xlsx
