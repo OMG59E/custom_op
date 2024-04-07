@@ -3,8 +3,8 @@
 #include <cassert>
 #include <vector>
 #include <algorithm>
-#include "Eigen/Dense"
 #include <tvm/runtime/registry.h>
+#include "Eigen/Dense"
 
 using ConstEigenVectorArrayMap = Eigen::Map<const Eigen::Array<float, Eigen::Dynamic, 1>>;
 using EigenVectorArrayMap = Eigen::Map<Eigen::Array<float, Eigen::Dynamic, 1>>;
@@ -36,7 +36,7 @@ TVM_DLL int CustomGroupnorm_arm(DLTensor* X, DLTensor* num_groups,
         const float Xi_mean = Xi.mean();
         const float squared_norm = (Xi - Xi_mean).matrix().squaredNorm();
         const float inv_stdev = 1.f / std::sqrt(squared_norm / sample_size + eps);
-        EigenVectorArrayMap Yi(out + sample_size * i, sample_size);
+        EigenVectorArrayMap Yi(out_data + sample_size * i, sample_size);
         const float channel_scale = inv_stdev * scale_data[i % (C * num_groups_i)];
         const float channel_shift = bias_data[i % (C * num_groups_i)] - Xi_mean * channel_scale;
         Yi = Xi * channel_scale + channel_shift;
