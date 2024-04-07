@@ -58,28 +58,6 @@ void GroupNormKernel<T>::Compute(OrtKernelContext *context) {
 }
 
 
-struct OrtCustomOpDomainDeleter {
-    explicit OrtCustomOpDomainDeleter(const OrtApi *ort_api) {
-        ort_api_ = ort_api;
-    }
-
-    void operator()(OrtCustomOpDomain *domain) const {
-        ort_api_->ReleaseCustomOpDomain(domain);
-    }
-
-    const OrtApi *ort_api_;
-};
-
-using OrtCustomOpDomainUniquePtr = std::unique_ptr<OrtCustomOpDomain, OrtCustomOpDomainDeleter>;
-static std::vector<OrtCustomOpDomainUniquePtr> ort_custom_op_domain_container;
-static std::mutex ort_custom_op_domain_mutex;
-
-static void AddOrtCustomOpDomainToContainer(OrtCustomOpDomain *domain, const OrtApi *ort_api) {
-    std::lock_guard<std::mutex> lock(ort_custom_op_domain_mutex);
-    auto ptr = std::unique_ptr<OrtCustomOpDomain, OrtCustomOpDomainDeleter>(domain, OrtCustomOpDomainDeleter(ort_api));
-    ort_custom_op_domain_container.push_back(std::move(ptr));
-}
-
 OrtStatus *ORT_API_CALL RegisterCustomOps(OrtSessionOptions *options, const OrtApiBase *api) {
     OrtCustomOpDomain *domain = nullptr;
     const OrtApi *ortApi = api->GetApi(ORT_API_VERSION);
@@ -88,7 +66,6 @@ OrtStatus *ORT_API_CALL RegisterCustomOps(OrtSessionOptions *options, const OrtA
         return status;
     }
 
-    AddOrtCustomOpDomainToContainer(domain, ortApi);;
     if (auto status = ortApi->CustomOpDomain_Add(domain, &c_GroupNormCustomOp)) {
         return status;
     }
