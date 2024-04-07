@@ -4,3 +4,6 @@ build
 cmake-build*
 *.onnx
 *.json
+outputs
+__pycache__
+.pkl_memoize_py3
