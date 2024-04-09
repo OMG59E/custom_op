@@ -9,5 +9,4 @@ __pycache__
 .pkl_memoize_py3
 *.so
 *.xlsx
-3rdparty
 logs
