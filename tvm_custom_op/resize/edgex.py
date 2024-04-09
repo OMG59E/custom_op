@@ -908,9 +908,9 @@ def export_graph_library(graph_lib, export_lib_path, target_host_cc=None, ir_mod
             cc_options.append(f"-I{cand}/3rdparty/dlpack/include")
             cc_options.append(f"-I{cand}/3rdparty/dmlc-core/include")
         
-        # cc_options.append(f"-D_GLIBCXX_USE_CXX11_ABI=0")
-        cc_options.append(f"-I/home/xingwg/workspaces/custom_op/3rdparty/pytorch_edge10_release/torch/include")
-        cc_options.append(f"-L/home/xingwg/workspaces/custom_op/3rdparty/pytorch_edge10_release/torch/lib")
+        cc_options.append(f"-D_GLIBCXX_USE_CXX11_ABI=0")
+        cc_options.append(f"-I/home/xingwg/workspaces/custom_op/3rdparty/libtorch_a55/include")
+        cc_options.append(f"-L/home/xingwg/workspaces/custom_op/3rdparty/libtorch_a55/lib")
         cc_options.append(f"-ltorch")
         cc_options.append(f"-lc10")
         cc_options.append(f"-ltorch_cpu")
