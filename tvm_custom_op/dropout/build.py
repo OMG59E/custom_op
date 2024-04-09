@@ -4,18 +4,18 @@ from tvm.contrib.edgex.utils import export_relay_to_onnx
 from tvm.contrib.edgex import load_model_from_file
 from tvm.contrib.edgex import get_version
 from tvm.contrib.edgex import optimize_and_compile
-from custom_group_norm import CustomGroupnormOp
+from edgex_dropout import EdgexDropoutOp
 
 print(get_version())
 
 # onnx to relay_func
 save_dir = "outputs"
-onnx_file = "../pytorch_custom_op/model.onnx"
-shape_dict = {"X": (3, 2, 1, 2), "num_groups": (1,), "scale": (2,), "bias": (2,)}
+onnx_file = "../../pytorch_custom_op/dropout/dropout_forward.onnx"
+shape_dict = {"input": (1, 3, 3, 3)}
 mod, params = load_model_from_file(onnx_file, "onnx", shape_dict)
 
 # quantization
-in_dtypes = {"X": "float32", "num_groups": "float32", "scale": "float32", "bias": "float32"}
+in_dtypes = {"input": "float32"}
 quantize_config = tvm.relay.quantization.get_quantize_config("nnp400", in_dtypes)
 quantize_config["calib_method"] = "kld"
 quantize_config["level"] = 0
@@ -38,6 +38,11 @@ target_host = ["llvm -mtriple=x86_64", "llvm -mtriple=aarch64"]
 target_host_cc = [None, ARM_C_COMPILER]
 target_device = tvm.target.Target("edgex", host="edgex_virtual_host")
 export_lib_path = ["model.x86.O2.so", "model.a55.O2.so"]
+
+# export_lib_path = ["model.x86.O2.so"]
+# target_host = ["llvm -mtriple=x86_64"]
+# target_host_cc = [None]
+# target_device = tvm.target.Target("edgex")
 
 libs = optimize_and_compile(
     mod_quant,

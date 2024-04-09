@@ -7,6 +7,7 @@
 - eigen3
 - onnxruntime==1.13.1
 - tytvm==0.8.0
+- gcc>=9.4.0
 
 
 ## PyTorch
